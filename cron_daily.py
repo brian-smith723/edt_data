@@ -5,7 +5,7 @@ from edt_datareader.data import DataReader
 from pandas import DataFrame
 import pandas as pd
 from client import get_fred_logger, create_logging_connection, PerfLoggingCursor
-from config import CONN_COMMON, GET_FRED_DAILY
+from config import CONN_COMMON, GET_FRED_DAILY, CONN_FRED
 from fred import FredWriter
 
 #Database loggers
@@ -31,7 +31,8 @@ def perform_daily_cron():
             cur.callproc(GET_FRED_DAILY) 
             records = cur.fetchall()
             cur.close()
-            FredWriter(records, frequency='daily',logger=fred_logger).write()
+            FredWriter(records, frequency='daily',logger=fred_logger,
+                    connection=CONN_FRED).write()
         
 if __name__ == "__main__":
     perform_daily_cron()
