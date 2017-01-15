@@ -5,7 +5,7 @@ from edt_datareader.data import DataReader
 from pandas import DataFrame
 import pandas as pd
 from client import get_fred_logger, create_logging_connection, PerfLoggingCursor
-from config import CONN_COMMON, GET_FRED_DAILY, CONN_FRED
+from config import CONN_COMMON, GET_FRED_DAILY, CONN_FRED, UPDATE_DATE
 from fred import FredWriter
 
 #Database loggers
@@ -30,9 +30,12 @@ def perform_daily_cron():
         if data_source == 'fred':
             cur.callproc(GET_FRED_DAILY) 
             records = cur.fetchall()
-            cur.close()
-            FredWriter(records, frequency='daily',logger=fred_logger,
+            fred = FredWriter(records, frequency='daily',logger=fred_logger,
                     connection=CONN_FRED).write()
-        
+            for record in records:
+                if record not in fred.get_failed_indicators():
+                    cur.callproc(UPDATE_DATE, (record[0],))
+                    conn.commit()
+            cur.close()
 if __name__ == "__main__":
     perform_daily_cron()

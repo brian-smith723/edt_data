@@ -13,6 +13,8 @@ class FredWriter(_BaseWriter):
     Date format is datetime
 
     """
+    def get_failed_indicators(self):
+        return self.failed
 
     def write(self):
         self.logger.info("starting to write...")
@@ -33,6 +35,7 @@ class FredWriter(_BaseWriter):
                         cur.execute(query, data)
                         #update common
                     except (pg.ProgrammingError, pg.IntegrityError) as e:
+                        self.failed.append(record)
                         self.logger.error(e.pgerror)
                         conn.rollback()
 

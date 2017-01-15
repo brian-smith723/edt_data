@@ -20,6 +20,7 @@ class _BaseWriter(object):
         self.logger = logger
         self.connection = connection
         self.proc = proc
+        self.failed = []
 
         if self.frequency == "daily":
             self.logger.info("performing daily cron")
@@ -28,3 +29,9 @@ class _BaseWriter(object):
         if self.frequency == "monthly":
             self.logger.info("performing monthly cron")
 
+    @property
+    def get_failed_indicators(self):
+        # must be overridden in subclass
+        raise NotImplementedError
+
+    
