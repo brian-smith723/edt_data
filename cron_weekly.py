@@ -1,17 +1,15 @@
-import psycopg2 as pg  
-import psycopg2.extensions
-from psycopg2.extras import LoggingConnection, LoggingCursor
 from edt_datareader.data import DataReader
 from pandas import DataFrame
 import pandas as pd
-from client import get_fred_logger, create_logging_connection, PerfLoggingCursor
-from config import CONN_COMMON, GET_FRED_MONTHLY, CONN_FRED, UPDATE_DATE
-from fred import FredWriter
+from edt_datawriter.client import get_fred_logger, create_logging_connection, PerfLoggingCursor
+from edt_datawriter.config import CONN_COMMON, GET_FRED_MONTHLY, CONN_FRED, UPDATE_DATE
+from edt_datawriter.fred import FredWriter
+from edt_datawriter.common import CommonWriter 
 
 #Database loggers
 fred_logger = get_fred_logger()
 
-def perform_weekly_cron():
+def update_weekly_indicators():
     """
     Writes weekly data to database from a number of online sources.
 
@@ -21,23 +19,15 @@ def perform_weekly_cron():
             'fred',
             ]
 
-    conn = create_logging_connection(CONN_COMMON)
-    cur = conn.cursor(cursor_factory=PerfLoggingCursor)
-
     for data_source in data_sources:
         if data_source == "yahoo":
             raise NotImplementedError
         if data_source == 'fred':
-            cur.callproc(GET_FRED_MONTHLY) 
-            records = cur.fetchall()
-            fred = FredWriter(records, frequency='monthly',logger=fred_logger,
+            records = CommonWriter(data_source='fred',frequency='weekly',logger=fred_logger, 
+                    connection=CONN_COMMON).get_records()
+            updated_fred_records = FredWriter(records, frequency='weekly',logger=fred_logger,
                     connection=CONN_FRED).write()
-            for record in records:
-                if record not in fred.get_failed_indicators():
-                    cur.callproc(UPDATE_DATE, (record[0],))
-                    conn.commit()
-        
-            cur.close()
+            CommonWriter(data_source='fred',records=updated_fred_records, frequency='weekly',
+                    logger=fred_logger, connection=CONN_COMMON).update()
 if __name__ == "__main__":
-    perform_weekly_cron()
-
+    update_weekly_indicators()

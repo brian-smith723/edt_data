@@ -9,7 +9,7 @@ from edt_datawriter.common import CommonWriter
 #Database loggers
 fred_logger = get_fred_logger()
 
-def update_daily_indicators():
+def update_5year_indicators():
     """
     Writes daily data to database from a number of online sources.
 
@@ -23,11 +23,12 @@ def update_daily_indicators():
         if data_source == "yahoo":
             raise NotImplementedError
         if data_source == 'fred':
-            records = CommonWriter(data_source='fred',frequency='daily',logger=fred_logger,
+            records = CommonWriter(data_source='fred',frequency='5year',logger=fred_logger,
                                    connection=CONN_COMMON).get_records()
-            updated_fred_records = FredWriter(records, frequency='daily',logger=fred_logger,
+            updated_fred_records = FredWriter(records, frequency='5year',logger=fred_logger,
                               connection=CONN_FRED).write()
-            CommonWriter(data_source='fred',records=updated_fred_records, frequency='daily',logger=fred_logger, 
+            CommonWriter(data_source='fred',records=updated_fred_records, frequency='5year',logger=fred_logger, 
                         connection=CONN_COMMON).update()
 if __name__ == "__main__":
-    update_daily_indicators()
+    update_5year_indicators()
+
