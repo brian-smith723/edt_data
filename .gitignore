@@ -1,3 +1,4 @@
+clean_db.py
 edt_datareader
 config.py
 *.swp

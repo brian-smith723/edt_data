@@ -38,7 +38,7 @@ class CommonWriter(_BaseWriter):
     def cursor(self, conn):
         return conn.cursor(cursor_factory=PerfLoggingCursor)
 
-    def which_proc(self, proc=None):
+    def which_proc(self):
         """ Returns stored procedure"""
         if self.frequency == "daily":
             return data_source[self.data_source]['daily'] 
@@ -56,7 +56,7 @@ class CommonWriter(_BaseWriter):
             return data_source[self.data_source]['annual'] 
         if self.frequency == "5year":
             return data_source[self.data_source]['5year'] 
-        if proc != None and proc =="update":
+        if self.frequency =="update":
             return data_source[self.data_source]['update'] 
 
     def get_records(self):
@@ -73,7 +73,7 @@ class CommonWriter(_BaseWriter):
             try:
                 conn = self.connect()
                 cur = self.cursor(conn)
-                cur.callproc(self.which_proc(proc="update"),(record[0],)) 
+                cur.callproc(self.which_proc(),(record[0],)) 
                 conn.commit()
             except (Exception) as e:
                 self.logger.error("Common error {}".format(e))
