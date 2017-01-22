@@ -1,9 +1,9 @@
 import psycopg2 as pg  
 import psycopg2.extensions
 from psycopg2.extras import LoggingConnection, LoggingCursor
-from base import _BaseWriter
+from .base import _BaseWriter
 from edt_datareader.data import DataReader
-from client import create_logging_connection, PerfLoggingCursor
+from .client import create_logging_connection, PerfLoggingCursor
 from pandas import DataFrame
 import pandas as pd
 
@@ -13,6 +13,11 @@ class FredWriter(_BaseWriter):
     Date format is datetime
 
     """
+
+    def failed(self):
+        """ Returns a list of indicators that failed to update"""
+        
+        return [record for record in self.records if record not in self.failed_to_update] 
 
     def write(self):
         self.logger.info("starting to write...")
@@ -31,8 +36,8 @@ class FredWriter(_BaseWriter):
                     data = (date, value)
                     try:
                         cur.execute(query, data)
-                        #update common
                     except (pg.ProgrammingError, pg.IntegrityError) as e:
+                        failed_to_update.append(record)
                         self.logger.error(e.pgerror)
                         conn.rollback()
 
@@ -41,3 +46,4 @@ class FredWriter(_BaseWriter):
             except (Exception) as e:
                 self.logger.error("FRED error {}".format(e))
         self.logger.info("finished writing...")
+        return self.failed() 

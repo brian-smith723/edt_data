@@ -1,17 +1,15 @@
-import psycopg2 as pg  
-import psycopg2.extensions
-from psycopg2.extras import LoggingConnection, LoggingCursor
 from edt_datareader.data import DataReader
 from pandas import DataFrame
 import pandas as pd
-from client import get_fred_logger, create_logging_connection, PerfLoggingCursor
-from config import CONN_COMMON, GET_FRED_MONTHLY
-from fred import FredWriter
+from edt_datawriter.client import get_fred_logger, create_logging_connection, PerfLoggingCursor
+from edt_datawriter.config import CONN_COMMON, GET_FRED_MONTHLY, CONN_FRED, UPDATE_DATE
+from edt_datawriter.fred import FredWriter
+from edt_datawriter.common import CommonWriter 
 
 #Database loggers
 fred_logger = get_fred_logger()
 
-def perform_monthly_cron():
+def update_monthly_indicators():
     """
     Writes monthly data to database from a number of online sources.
 
@@ -21,17 +19,15 @@ def perform_monthly_cron():
             'fred',
             ]
 
-    conn = create_logging_connection(CONN_COMMON)
-    cur = conn.cursor(cursor_factory=PerfLoggingCursor)
-
     for data_source in data_sources:
         if data_source == "yahoo":
             raise NotImplementedError
         if data_source == 'fred':
-            cur.callproc(GET_FRED_MONTHLY) 
-            records = cur.fetchall()
-            cur.close()
-            FredWriter(records, frequency='monthly',logger=fred_logger).write()
-        
+            records = CommonWriter(data_source='fred',frequency='monthly',logger=fred_logger, 
+                    connection=CONN_COMMON).get_records()
+            updated_fred_records = FredWriter(records, frequency='monthly',logger=fred_logger,
+                    connection=CONN_FRED).write()
+            CommonWriter(data_source='fred',records=updated_fred_records, frequency='monthly',
+                    logger=fred_logger, connection=CONN_COMMON).update()
 if __name__ == "__main__":
-    perform_monthly_cron()
+    update_monthly_indicators()
