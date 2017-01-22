@@ -27,7 +27,7 @@ def update_weekly_indicators():
                     connection=CONN_COMMON).get_records()
             updated_fred_records = FredWriter(records, frequency='weekly',logger=fred_logger,
                     connection=CONN_FRED).write()
-            CommonWriter(data_source='fred',records=updated_fred_records, frequency='weekly',
+            CommonWriter(data_source='fred',records=records, frequency='update',
                     logger=fred_logger, connection=CONN_COMMON).update()
 if __name__ == "__main__":
     update_weekly_indicators()
