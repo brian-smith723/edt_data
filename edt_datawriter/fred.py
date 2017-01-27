@@ -27,6 +27,8 @@ class FredWriter(_BaseWriter):
                 df = DataReader(record[0], "fred")
                 conn = create_logging_connection(self.connection)
                 cur = conn.cursor(cursor_factory=PerfLoggingCursor)
+                table_name = df.columns.values.tolist()[0]
+
                 for row in df.index.get_values():
                     table_name = df.columns.values.tolist()[0]
                     date = row.astype('M8[D]').astype('O') # parses 2009-12-31T19:00:00.000000000-0500 to 2009-12-31
@@ -37,7 +39,7 @@ class FredWriter(_BaseWriter):
                     try:
                         cur.execute(query, data)
                     except (pg.ProgrammingError, pg.IntegrityError) as e:
-                        failed_to_update.append(record)
+                        self.failed_to_update.append(record)
                         self.logger.error(e.pgerror)
                         conn.rollback()
 
@@ -45,5 +47,6 @@ class FredWriter(_BaseWriter):
                 cur.close()
             except (Exception) as e:
                 self.logger.error("FRED error {}".format(e))
+                self.failed_to_update.append(record)
         self.logger.info("finished writing...")
         return self.failed() 

@@ -60,8 +60,8 @@ class CommonWriter(_BaseWriter):
             return data_source[self.data_source]['update'] 
 
     def get_records(self):
-        conn = self.connect()#create_logging_connection(self.connection)
-        cur =  self.cursor(conn)#conn.cursor(cursor_factory=PerfLoggingCursor)
+        conn = self.connect()
+        cur =  self.cursor(conn)
         cur.callproc(self.which_proc()) 
         records = cur.fetchall()
         cur.close()
